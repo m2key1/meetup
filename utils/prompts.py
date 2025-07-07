@@ -73,12 +73,36 @@ Given a user-provided text, you must perform the following steps:
 **Constraints:**
 * The output must be a single, valid JSON object and nothing else.
 * If the text contains no identifiable entities or relationships, return an empty graph: `{{"nodes": [], "edges": []}}`.
-* Be comprehensive. Extract all possible nodes and edges supported by the text.
+* Be comprehensive. Extract ALL possible nodes and edges supported by the text. Nodes may have multiple cross connections!
 * Adhere strictly to the information within the text provided.
-* Keep it short!
 
 **Real Input Text:**
 {text}
 
 **JSON Output:**
+"""
+
+OCR_PROMPT = """
+Please perform OCR on this scanned document and convert it into well-structured Markdown format. 
+Only return text that is actually on the document. If there is no text on the document, return nothing. DO NOT HALLUCINATE!
+
+**Output Requirements:**
+- Use proper Markdown hierarchy with headers (# ## ###) to organize content logically
+- Structure lists, tables, and paragraphs appropriately 
+- Maintain the original document's logical flow and organization
+- Preserve formatting elements like bold, italic, and emphasis where present
+- Use proper Markdown syntax for any tables, lists, or special formatting
+- If the document contains handwritten text, notes, or signatures, transcribe them as accurately as possible. Clearly mark all transcribed handwritten content by enclosing it in single asterisks to render it as *italic* text. For example: *Max Mustermann*.
+
+**Format Instructions:**
+- Your response must contain ONLY the Markdown content
+- Begin your response with ```
+- End your response with ```
+- Do not include any explanatory text, comments, or additional content outside the code block
+
+**Structure Guidelines:**
+- Create clear section headers that reflect the document's organization
+- Break up long text into readable paragraphs
+- Use appropriate list formatting (ordered/unordered) where applicable
+- Ensure proper spacing and readability in the final Markdown output
 """

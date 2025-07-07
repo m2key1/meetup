@@ -2,6 +2,8 @@ import json
 import requests
 from typing import Optional
 from pydantic import BaseModel
+import base64
+import re
 
 GRAMMAR = r'''
 root ::= knowledge-graph-object
@@ -57,14 +59,69 @@ def llm(model_name: str, prompt:str, system: Optional[str]=None, schema: Optiona
     timings = response_data['timings']
     prompt_per_second = timings['prompt_per_second']
     tokens_per_second = timings['predicted_per_second']
+    
+    draft_accept_ratio = None
+    
+    if 'draft_n' in timings:
+        draft_n = timings['draft_n']
+        draft_n_accepted = timings['draft_n_accepted']
+        
+        draft_accept_ratio = draft_n_accepted / draft_n
+    
     usage = response_data['usage']
     predicted_tokens = usage['completion_tokens']
     prompt_tokens = usage['prompt_tokens']
     
-    return response_text, [model_name, f"{tokens_per_second:.2f}", f"{prompt_per_second:.2f}", predicted_tokens, prompt_tokens]
+    if draft_accept_ratio:
+        return response_text, [model_name, f"{tokens_per_second:.2f}", f"{prompt_per_second:.2f}", predicted_tokens, prompt_tokens, f"{draft_accept_ratio:.2f}"]
+    else:
+        return response_text, [model_name, f"{tokens_per_second:.2f}", f"{prompt_per_second:.2f}", predicted_tokens, prompt_tokens]
 
 def unload(host='localhost'):
     response = requests.get(f'http://{host}:8888/unload')
     response.raise_for_status()
     return response
+
+def perform_ocr(image_path: str, prompt: str, host: str = 'localhost') -> str:
+    try:
+        with open(image_path, "rb") as image_file:
+            image_as_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+    except FileNotFoundError:
+        return f"Error: The file '{image_path}' was not found."
+    except Exception as e:
+        return f"Error reading or encoding the image: {e}"
+
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": "mistral-small-ocr",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image_as_base64}"}
+                    }
+                ]
+            }
+        ],
+        "temperature": 0.1
+    }
+
+    
+    server_url = f"http://{host}:8888/v1/chat/completions"
+    response = requests.post(server_url, headers=headers, data=json.dumps(payload))
+    response.raise_for_status()
+    
+    response_data = response.json()
+    content = response_data['choices'][0]['message']['content'].strip()
+    
+    pattern = r'```(?:markdown)?\s*\n(.*?)\n```'
+    match = re.search(pattern, content, re.DOTALL)
+    
+    if match:
+        return match.group(1).strip()
+    else:
+        return content
     
