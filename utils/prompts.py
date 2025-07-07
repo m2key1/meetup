@@ -92,6 +92,7 @@ Only return text that is actually on the document. If there is no text on the do
 - Maintain the original document's logical flow and organization
 - Preserve formatting elements like bold, italic, and emphasis where present
 - Use proper Markdown syntax for any tables, lists, or special formatting
+- Use [X] for checked and [ ] for unchecked checkboxes
 - If the document contains handwritten text, notes, or signatures, transcribe them as accurately as possible. Clearly mark all transcribed handwritten content by enclosing it in single asterisks to render it as *italic* text. For example: *Max Mustermann*.
 
 **Format Instructions:**
