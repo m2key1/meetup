@@ -1,0 +1,138 @@
+healthCheckTimeout: 90
+
+logLevel: info
+
+macros:
+  "server-latest": >
+      /home/david/Documents/meetup/llama.cpp/build/bin/llama-server
+      --host 0.0.0.0
+      --port ${PORT}
+      --threads 12
+      --threads-batch 12
+
+  "gpu-load": |
+      --flash-attn
+      -ngl 999
+      -ngld 999
+
+  "gemma3-args": |
+    --temp 1.0
+    --repeat-penalty 1.0
+    --min-p 0.01
+    --top-k 64
+    --top-p 0.95
+    --slots
+
+  "qwen3-args": |
+    --temp 0.7
+    --top-k 20
+    --top-p 0.8
+    --min-p 0
+    --slots
+    --jinja
+    --repeat-penalty 1.1
+
+  "mistral-small-args": |
+    --temp 0.15
+    --slots
+
+models:
+  "mistral-small-ocr":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      -m /home/david/Documents/meetup/models/Mistral-Small-3.1-24B-Instruct-2503-Q4_K_M.gguf
+      --mmproj /home/david/Documents/meetup/models/mmproj-F16.gguf
+      --ctx-size 8000
+      --cont-batching
+      --parallel 1
+      --batch-size 512
+      --temp 0.1
+      --no-context-shift
+
+  "mistral-small":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${mistral-small-args}
+      -m /home/david/Documents/meetup/models/Mistral-Small-3.1-24B-Instruct-2503-Q4_K_M.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+
+  "mistral-small-sd":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${mistral-small-args}
+      -m /home/david/Documents/meetup/models/Mistral-Small-3.1-24B-Instruct-2503-Q4_K_M.gguf
+      -md /home/david/Documents/meetup/models/Mistral-Small-3.1-DRAFT-0.5B-GGUF.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+
+  "qwen3":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${qwen3-args}
+      -m /home/david/Documents/meetup/models/Qwen3-32B-GGUF-Q4_K_M.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+
+  "qwen3-sd":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${qwen3-args}
+      -m /home/david/Documents/meetup/models/Qwen3-32B-GGUF-Q4_K_M.gguf
+      -md /home/david/Documents/meetup/models/Qwen3-0.6B-Q8_0.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+  
+  "gemma3":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${gemma3-args}
+      -m /home/david/Documents/meetup/models/gemma-3-27b-it-qat-Q4_K_M.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
+
+  "gemma3-sd":
+    cmd: |
+      ${server-latest}
+      ${gpu-load}
+      ${gemma3-args}
+      -m /home/david/Documents/meetup/models/gemma-3-27b-it-qat-Q4_K_M.gguf
+      -md /home/david/Documents/meetup/models/gemma-3-1b-it-Q8_0.gguf
+      --ctx-size 32000
+      --n-predict -1
+      --cont-batching
+      --parallel 1
+      --no-context-shift
+      --cache-type-k q8_0
+      --cache-type-v q8_0
