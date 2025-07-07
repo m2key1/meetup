@@ -2,9 +2,6 @@ import json
 import requests
 from typing import Optional
 from pydantic import BaseModel
-from pydantic_gbnf_grammar_generator import generate_gbnf_grammar_and_documentation
-
-SERVER_URL = "http://localhost:8888/v1/chat/completions"
 
 GRAMMAR = r'''
 root ::= knowledge-graph-object
@@ -18,7 +15,7 @@ integer ::= [0-9]+
 ws ::= [ \t\n]*
 '''
 
-def llm(model_name: str, prompt:str, system: Optional[str]=None, schema: Optional[BaseModel] = None):
+def llm(model_name: str, prompt:str, system: Optional[str]=None, schema: Optional[BaseModel] = None, host='localhost'):
     messages = []
     
     if system:
@@ -39,7 +36,9 @@ def llm(model_name: str, prompt:str, system: Optional[str]=None, schema: Optiona
     if schema:
         payload.update({"grammar": GRAMMAR})
         
-    response = requests.post(SERVER_URL, 
+    server_url = f"http://{host}:8888/v1/chat/completions"
+        
+    response = requests.post(server_url, 
                              headers={"Content-Type": "application/json"},
                              data=json.dumps(payload))
     
@@ -64,8 +63,8 @@ def llm(model_name: str, prompt:str, system: Optional[str]=None, schema: Optiona
     
     return response_text, [model_name, f"{tokens_per_second:.2f}", f"{prompt_per_second:.2f}", predicted_tokens, prompt_tokens]
 
-def unload():
-    response = requests.get('http://localhost:8888/unload')
+def unload(host='localhost'):
+    response = requests.get(f'http://{host}:8888/unload')
     response.raise_for_status()
     return response
     

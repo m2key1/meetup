@@ -9,6 +9,7 @@ macros:
       --port ${PORT}
       --threads 12
       --threads-batch 12
+      --seed 420
 
   "gpu-load": |
       --flash-attn
